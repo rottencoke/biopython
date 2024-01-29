@@ -1,0 +1,14 @@
+## Ignore blast result files, but keep the directory.
+!/blast_result/
+/blast_result/*
+!/blast_result/.keep
+
+## Ignore blast result files, but keep the directory.
+!/pdb/
+/pdb/*
+!/pdb/.keep
+
+## Ignore blast result files, but keep the directory.
+!/result/
+/result/*
+!/result/.keep
