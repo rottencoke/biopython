@@ -1,12 +1,13 @@
 from analyze_distance import AnalyzeDistances
 from analyze_interaction import AnalyzeInteractions
+from analyze_hydrophobicity import AnalyzeHydrophobicity
 from datetime import datetime
 import csv
 import numpy as np
 
 # PDBファイル名とblast_resultファイル名
-file_pdb = "1wiw"
-file_blast_result = "glucose-6-phosphate isomerase_20240128_212243"
+file_pdb = "7pn0"
+file_blast_result = "ribose-phosphate diphosphokinase_20240128_183350"
 
 # PDBファイルを指定して、AnalyzeDistancesのインスタンスを作成
 ins_distance = AnalyzeDistances(file_pdb)
@@ -108,8 +109,12 @@ for index in range(num_data):
     print(f"疎水性相互作用 : {num_hydrophobic}個")
     print(f"イオン結合 : {num_ionic}個")
 
+    # 疎水度計算
+    ins_hydrophobicity = AnalyzeHydrophobicity(hit_sequence)
+    value_hydrophobicity = ins_hydrophobicity.calculate_hydrophobicity()
+    
     # データを配列にまとめる
-    arr_data = np.array([genus_and_species, strain, topt, protein, bit_score, align_len, gaps, num_disulfide, num_hydrophobic, num_ionic])
+    arr_data = np.array([genus_and_species, strain, topt, protein, bit_score, align_len, gaps, num_disulfide, num_hydrophobic, num_ionic, value_hydrophobicity])
 
     # 配列を行列に保存
     matrix_interactions.append(arr_data)
@@ -125,7 +130,7 @@ date_formatted = now.strftime("%m%d_%H%M%S")
 name_file = f"result/analysis_{date_formatted}_{file_pdb}.csv"
 
 # ヘッダー（各データの名前）
-headers = ['genus_and_species', 'strain', 'Topt_ave[℃]', 'protein', 'bit_score', 'align_len', 'gaps', 'disulfide', 'hydrophobic', 'ionic']
+headers = ['genus_and_species', 'strain', 'Topt_ave[℃]', 'protein', 'bit_score', 'align_len', 'gaps', 'disulfide', 'hydrophobic', 'ionic', 'hydrophobicity']
 
 # CSVファイルに書き込む
 with open(name_file, 'w', newline='', encoding='utf-8') as file:
