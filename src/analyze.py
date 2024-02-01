@@ -6,8 +6,8 @@ import csv
 import numpy as np
 
 # PDBファイル名とblast_resultファイル名
-file_pdb = "7pn0"
-file_blast_result = "ribose-phosphate diphosphokinase_20240128_183350"
+file_pdb = "1bkg"
+file_blast_result = "aspartate aminotransferase_20240130_170132"
 
 # PDBファイルを指定して、AnalyzeDistancesのインスタンスを作成
 ins_distance = AnalyzeDistances(file_pdb)
@@ -101,23 +101,32 @@ for index in range(num_data):
     ins_interaction = AnalyzeInteractions(obj_blast_result, matrix_distance)
 
     # 各相互作用の解析
-    num_disulfide = ins_interaction.count_interactions(amino_pair_disulfide, threshold)
-    num_hydrophobic = ins_interaction.count_interactions_hydrophobic(threshold)
-    num_ionic = ins_interaction.count_interactions(amino_pair_ionic, threshold)
+    num_hydrophobic = ins_interaction.count_interactions_hydrophobic()
+    num_hydrophobic_pos = ins_interaction.count_hydrophobic_residues_unique()
+    num_hydrophobic_core, hydrophobic_cores = ins_interaction.identify_hydrophobic_cores()
 
-    print(f"ジスルフィド結合 : {num_disulfide}個")
+    result_hydrophobic = []
+    for item in hydrophobic_cores:
+        result_hydrophobic.append(item['aromatic_count'])
+        result_hydrophobic.append(item['aliphatic_count'])
+
     print(f"疎水性相互作用 : {num_hydrophobic}個")
-    print(f"イオン結合 : {num_ionic}個")
+    print(f"コア数 : {num_hydrophobic_core}個")
+    print(hydrophobic_cores)
 
     # 疎水度計算
     ins_hydrophobicity = AnalyzeHydrophobicity(hit_sequence)
     value_hydrophobicity = ins_hydrophobicity.calculate_hydrophobicity()
     
     # データを配列にまとめる
-    arr_data = np.array([genus_and_species, strain, topt, protein, bit_score, align_len, gaps, num_disulfide, num_hydrophobic, num_ionic, value_hydrophobicity])
+    arr_data = np.array([genus_and_species, strain, topt, protein, bit_score, align_len, gaps, num_hydrophobic, num_hydrophobic_pos, value_hydrophobicity])
+
+    arr_result_hydrophobic = np.array(result_hydrophobic)
+
+    arr_data_combined = np.concatenate((arr_data, arr_result_hydrophobic))
 
     # 配列を行列に保存
-    matrix_interactions.append(arr_data)
+    matrix_interactions.append(arr_data_combined)
 
 
 # 現在の日時を取得
@@ -130,7 +139,7 @@ date_formatted = now.strftime("%m%d_%H%M%S")
 name_file = f"result/analysis_{date_formatted}_{file_pdb}.csv"
 
 # ヘッダー（各データの名前）
-headers = ['genus_and_species', 'strain', 'Topt_ave[℃]', 'protein', 'bit_score', 'align_len', 'gaps', 'disulfide', 'hydrophobic', 'ionic', 'hydrophobicity']
+headers = ['genus_and_species', 'strain', 'Topt_ave[℃]', 'protein', 'bit_score', 'align_len', 'gaps', 'hydrophobic', 'pos_hydrophobic', 'hydrophobicity']
 
 # CSVファイルに書き込む
 with open(name_file, 'w', newline='', encoding='utf-8') as file:

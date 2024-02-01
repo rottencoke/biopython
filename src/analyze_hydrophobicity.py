@@ -17,8 +17,5 @@ class AnalyzeHydrophobicity:
         # 合計値を計算
         total = sum(self.values[aa] for aa in self.amino_acid_sequence if aa in self.values)
 
-        # 配列の長さで割る
-        average = total / len(self.amino_acid_sequence)
-
-        return average
+        return total
     
