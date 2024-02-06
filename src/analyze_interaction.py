@@ -41,7 +41,9 @@ class AnalyzeInteractions:
 
                 value_to_add = 99
 
-                arr_add = np.full(len(matrix_distance_edited), value_to_add)
+                if pos + 1 > len(matrix_distance_edited): continue
+
+                arr_add = np.full(len(matrix_distance_edited[0]), value_to_add)
                 matrix_distance_edited = np.insert(matrix_distance_edited, pos + 1, arr_add, axis=0)
 
                 arr_add = np.full(len(matrix_distance_edited), value_to_add)
@@ -75,8 +77,8 @@ class AnalyzeInteractions:
     def count_interactions_hydrophobic(self):
         arr_hit_sequence = self.obj_blast_result['arr_hit_sequence']
         count = 0
-        for i in range(len(arr_hit_sequence)):
-            for j in range(i+1, len(arr_hit_sequence)):
+        for i in range(len(arr_hit_sequence)-1):
+            for j in range(i+1, (len(arr_hit_sequence)-1)):
                 # アミノ酸ごとの閾値を設定
                 threshold = self.__get_threshold(arr_hit_sequence[i], arr_hit_sequence[j])
 
@@ -93,15 +95,23 @@ class AnalyzeInteractions:
 
         for i in range(len(arr_hit_sequence)):
             for j in range(i+1, len(arr_hit_sequence)):
-                threshold = self.__get_threshold(arr_hit_sequence[i], arr_hit_sequence[j])
-                if self.matrix_distance[i + self.query_from][j + self.query_from] <= threshold:
-                    if arr_hit_sequence[i] in self.hydrophobic_amino_acids and arr_hit_sequence[j] in self.hydrophobic_amino_acids:
-                        hydrophobic_residues_counted[i] = True
-                        hydrophobic_residues_counted[j] = True
+                try:
+                    threshold = self.__get_threshold(arr_hit_sequence[i], arr_hit_sequence[j])
+                    if self.matrix_distance[i + self.query_from][j + self.query_from] <= threshold:
+                        if arr_hit_sequence[i] in self.hydrophobic_amino_acids and arr_hit_sequence[j] in self.hydrophobic_amino_acids:
+                            hydrophobic_residues_counted[i] = True
+                            hydrophobic_residues_counted[j] = True
+                except IndexError as e:
+                    print(f"Index error at positions i={i}, j={j}: {e}")
+                    # 必要に応じて追加のエラー処理をここに書く
+                except Exception as e:
+                    print(f"Unexpected error at positions i={i}, j={j}: {e}")
+                    # 他のエラーに対する処理
 
         count_unique_hydrophobic_residues = sum(hydrophobic_residues_counted)
         return count_unique_hydrophobic_residues
     
+    # 疎水性コアの数
     def identify_hydrophobic_cores(self):
         arr_hit_sequence = self.obj_blast_result['arr_hit_sequence']
         matrix_distance = self.matrix_distance
@@ -110,13 +120,20 @@ class AnalyzeInteractions:
         for i, aa in enumerate(arr_hit_sequence):
             if aa in self.hydrophobic_amino_acids and aa != 'M':  # 開始コドンのMは除外
                 new_core = True
-                for core in hydrophobic_cores:
-                    if any(self.__get_threshold(aa, arr_hit_sequence[j]) >= matrix_distance[i][j] for j in core):
-                        core.add(i)
-                        new_core = False
-                        break
-                if new_core:
-                    hydrophobic_cores.append({i})
+                try:
+                    for core in hydrophobic_cores:
+                        if any(self.__get_threshold(aa, arr_hit_sequence[j]) >= matrix_distance[i][j] for j in core):
+                            core.add(i)
+                            new_core = False
+                            break
+                    if new_core:
+                        hydrophobic_cores.append({i})
+                except IndexError as e:
+                    print(f"Index error with aa={aa} at position i={i}: {e}")
+                    # 必要に応じて追加のエラー処理をここに書く
+                except Exception as e:
+                    print(f"Unexpected error with aa={aa} at position i={i}: {e}")
+                    # 他のエラーに対する処理
 
         # アミノ酸の数が3つ未満のコアを削除
         hydrophobic_cores = [core for core in hydrophobic_cores if len(core) >= 3]

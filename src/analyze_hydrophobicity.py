@@ -19,3 +19,10 @@ class AnalyzeHydrophobicity:
 
         return total
     
+    def count_positive_residues(self):
+
+        num_arg = sum(aa =='R' for aa in self.amino_acid_sequence)
+        num_his = sum(aa =='H' for aa in self.amino_acid_sequence)
+        num_lys = sum(aa =='K' for aa in self.amino_acid_sequence)
+
+        return num_arg, num_his, num_lys
